@@ -134,7 +134,6 @@ final class FastCGIRequest: HTTPRequest {
     }
     
     private func addParam(name: String, value: String) {
-        let httpChars = "HTTP_".characters
         switch name {
         case "REQUEST_METHOD":
             method = HTTPMethod.from(string: value)
@@ -159,9 +158,9 @@ final class FastCGIRequest: HTTPRequest {
         case "REQUEST_URI":
             path = value
         default:
-            let nameChars = name.characters
-            if nameChars.starts(with: httpChars) {
-                let newName = String(nameChars[nameChars.index(nameChars.startIndex, offsetBy: httpChars.count)..<nameChars.endIndex]).lowercased().stringByReplacing(string: "_", withString: "-")
+            let httpPrefix = "HTTP_"
+            if name.starts(with: httpPrefix) {
+                let newName = String(name[name.index(name.startIndex, offsetBy: httpPrefix.count)..<name.endIndex]).lowercased().stringByReplacing(string: "_", withString: "-")
                 addHeader(HTTPRequestHeader.Name.fromStandard(name: newName), value: value)
             } // else unknown or unwanted header - ignored
         }
@@ -323,7 +322,7 @@ final class FastCGIRequest: HTTPRequest {
     
     func putPostData(_ b: [UInt8]) {
         if self.workingBuffer.count == 0 && self.mimes == nil {
-            if let contentType = self.contentType , contentType.characters.starts(with: "multipart/form-data".characters) {
+            if let contentType = self.contentType , contentType.starts(with: "multipart/form-data") {
                 self.mimes = MimeReader(contentType)
             }
         }
@@ -335,8 +334,8 @@ final class FastCGIRequest: HTTPRequest {
     }
     
     private func deFormURLEncoded(string: String) -> [(String, String)] {
-        return string.characters.split(separator: "&").map(String.init).flatMap {
-            let d = $0.characters.split(separator: "=").flatMap { String($0).stringByDecodingURL }
+        return string.split(separator: "&").map(String.init).flatMap {
+            let d = $0.split(separator: "=").flatMap { String($0).stringByDecodingURL }
             if d.count == 2 { return (d[0], d[1]) }
             if d.count == 1 { return (d[0], "") }
             return nil
