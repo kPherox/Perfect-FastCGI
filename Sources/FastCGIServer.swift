@@ -87,17 +87,12 @@ public class FastCGIServer {
             // exists. remove it
             unlink(name)
         }
+
         let pipe = NetNamedPipe()
         try pipe.bind(address: name)
         pipe.listen()
         chmod(name, mode_t(S_IRWXU|S_IRWXO|S_IRWXG))
-        if let user = self.runAsUser, let group = self.runAsGroup {
-            try PerfectServer.switchTo(userName: user, groupName: group)
-        } else if let user = self.runAsUser {
-            try PerfectServer.switchTo(userName: user)
-        } else if let group = self.runAsGroup {
-            try PerfectServer.switchTo(groupName: group)
-        }
+        try self.switchUser()
         self.net = pipe
         defer { pipe.close() }
         print("Starting FastCGI server on named pipe "+name)
@@ -109,6 +104,7 @@ public class FastCGIServer {
         let socket = NetTCP()
         try socket.bind(port: prt, address: bindAddress)
         socket.listen()
+        try self.switchUser()
         defer { socket.close() }
         print("Starting FastCGi server on \(bindAddress):\(prt)")
         self.start()
@@ -156,4 +152,15 @@ public class FastCGIServer {
             resp.completed()
         }
     }
+
+    func switchUser() throws {
+        if let user = self.runAsUser, let group = self.runAsGroup {
+            try PerfectServer.switchTo(userName: user, groupName: group)
+        } else if let user = self.runAsUser {
+            try PerfectServer.switchTo(userName: user)
+        } else if let group = self.runAsGroup {
+            try PerfectServer.switchTo(groupName: group)
+        }
+    }
+
 }
