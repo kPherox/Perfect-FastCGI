@@ -22,6 +22,9 @@ import PackageDescription
 
 let package = Package(
     name: "PerfectFastCGI",
+    products: [
+        .library(name: "PerfectFastCGI", targets: ["PerfectFastCGI"]),
+    ],
     dependencies: [
         .package(url: "https://github.com/PerfectlySoft/Perfect-HTTP.git", from: "3.0.0"),
     ],
